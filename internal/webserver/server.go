@@ -16,10 +16,10 @@ func Start(embeddedFiles embed.FS, port string) {
 	// 2. Route phục vụ file tĩnh (Frontend)
 	mux.Handle("/", http.FileServer(http.FS(embeddedFiles)))
 
-	log.Printf("Server đang chạy tại: http://localhost:%s", port)
+	log.Printf("Server is running at: http://localhost:%s", port)
 
 	// Khởi chạy server với bộ định tuyến (mux)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatalf("Lỗi khởi chạy server: %v", err)
+		log.Fatalf("Error starting server: %v", err)
 	}
 }

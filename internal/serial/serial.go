@@ -10,14 +10,14 @@ import (
 func GetPorts() ([]string, error) {
 	ports, err := serial.GetPortsList()
 	if err != nil {
-		log.Println("Lỗi khi quét cổng Serial:", err)
+		log.Println("Error when scanning Serial ports:", err)
 		return nil, err
 	}
 
 	if len(ports) == 0 {
-		log.Println("Không tìm thấy cổng Serial nào!")
+		log.Println("No Serial ports found!")
 	} else {
-		log.Printf("Đã quét thấy %d cổng: %v\n", len(ports), ports)
+		log.Printf("Found %d ports: %v\n", len(ports), ports)
 	}
 
 	return ports, nil
@@ -31,10 +31,10 @@ func OpenPort(portName string, baudRate int) (serial.Port, error) {
 
 	port, err := serial.Open(portName, mode)
 	if err != nil {
-		log.Printf("Lỗi mở cổng %s: %v\n", portName, err)
+		log.Printf("Error opening port %s: %v\n", portName, err)
 		return nil, err
 	}
 
-	log.Printf("Đã mở cổng %s với Baudrate %d\n", portName, baudRate)
+	log.Printf("Port opened: %s with Baudrate %d\n", portName, baudRate)
 	return port, nil
 }

@@ -27,7 +27,7 @@ type WsMessage struct {
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Lỗi nâng cấp WebSocket:", err)
+		log.Println("Error upgrading to WebSocket:", err)
 		return
 	}
 	defer conn.Close()
@@ -53,12 +53,12 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		var msg WsMessage
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			log.Println("Client ngắt kết nối:", err)
+			log.Println("Client disconnected:", err)
 			break
 		}
 
 		// LOG DEBUG TẤT CẢ GÓI TIN NHẬN TỪ WEB
-		log.Printf("DEBUG - Nhận từ Web: %+v\n", msg)
+		log.Printf("DEBUG - Received from Web: %+v\n", msg)
 
 		switch msg.Cmd {
 		case "list_ports":
@@ -68,7 +68,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		case "connect":
 			payload, ok := msg.Data.(map[string]interface{})
 			if !ok {
-				sendMsg(WsMessage{Evt: "error", Data: "Dữ liệu cấu hình không hợp lệ"})
+				sendMsg(WsMessage{Evt: "error", Data: "Invalid configuration data"})
 				continue
 			}
 			portName := payload["port"].(string)
@@ -76,7 +76,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 			port, err := serial.OpenPort(portName, baud)
 			if err != nil {
-				sendMsg(WsMessage{Evt: "error", Data: "Lỗi mở cổng: " + err.Error()})
+				sendMsg(WsMessage{Evt: "error", Data: "Error opening port: " + err.Error()})
 				continue
 			}
 
@@ -118,20 +118,20 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			if activePort != nil {
 				text, ok := msg.Data.(string)
 				if !ok {
-					log.Println("Lỗi: Dữ liệu TX không phải là chuỗi")
-					sendMsg(WsMessage{Evt: "error", Data: "Lỗi định dạng TX"})
+					log.Println("Error: TX data is not a string")
+					sendMsg(WsMessage{Evt: "error", Data: "Error formatting TX data"})
 					continue
 				}
 
 				n, err := activePort.Write([]byte(text))
 				if err != nil {
-					log.Println("Lỗi ghi Serial:", err)
-					sendMsg(WsMessage{Evt: "error", Data: "Lỗi gửi dữ liệu"})
+					log.Println("Error writing to Serial:", err)
+					sendMsg(WsMessage{Evt: "error", Data: "Error sending data"})
 				} else {
-					log.Printf("TX SUCCESS: Đã gửi %d bytes: %q\n", n, text)
+					log.Printf("TX SUCCESS: Sent %d bytes: %q\n", n, text)
 				}
 			} else {
-				sendMsg(WsMessage{Evt: "error", Data: "Chưa kết nối COM"})
+				sendMsg(WsMessage{Evt: "error", Data: "Not connected to COM port"})
 			}
 		}
 	}

@@ -42,19 +42,19 @@ func main() {
 		mux.HandleFunc("/ws", webserver.HandleWebSocket)
 		mux.Handle("/", http.FileServer(http.FS(web.FS)))
 
-		log.Printf("JDTerm Server đang chạy tại: %s\n", url)
+		log.Printf("JDTerm Server is running at: %s\n", url)
 		if err := http.ListenAndServe("127.0.0.1:"+port, mux); err != nil {
-			log.Fatalf("Lỗi server: %v", err)
+			log.Fatalf("Error starting server: %v", err)
 		}
 	}()
 
 	// Đợi server kịp khởi động 1 chút rồi tự động mở trình duyệt (App Mode / Default Browser)
 	go func() {
 		time.Sleep(300 * time.Millisecond)
-		log.Printf("Đang mở giao diện JDTerm...")
+		log.Printf("Opening JDTerm interface...")
 		err := browser.OpenURL(url)
 		if err != nil {
-			log.Printf("Không thể tự động mở trình duyệt. Hãy truy cập thủ công: %s\n", url)
+			log.Printf("Cannot automatically open browser. Please access manually: %s\n", url)
 		}
 	}()
 
@@ -63,5 +63,5 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
 
-	log.Println("JDTerm đã tắt.")
+	log.Println("JDTerm has been shut down.")
 }
