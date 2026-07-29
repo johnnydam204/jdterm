@@ -1,0 +1,26 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e1e; color: #d4d4d4; height: 100vh; }
+.app-container { display: flex; flex-direction: column; height: 100%; padding: 10px; gap: 10px; }
+
+/* Header / Controls */
+.control-panel { display: flex; justify-content: space-between; align-items: center; background: #252526; padding: 10px; border-radius: 5px; }
+.config-group { display: flex; align-items: center; gap: 10px; }
+select, input, .btn { padding: 6px 10px; background: #3c3c3c; color: #fff; border: 1px solid #555; border-radius: 3px; outline: none; }
+select:focus, input:focus { border-color: #007acc; }
+
+/* Buttons */
+.btn { cursor: pointer; transition: 0.2s; background: #0e639c; border: none; font-weight: bold; }
+.btn:hover { background: #1177bb; }
+.btn.connect { background: #28a745; }
+.btn.disconnect { background: #dc3545; }
+
+/* Console */
+.console-area { flex-grow: 1; background: #000; border: 1px solid #333; border-radius: 5px; padding: 10px; overflow-y: auto; }
+#console-output { font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; color: #4af626; }
+
+/* Input Footer */
+.input-panel { display: flex; gap: 10px; }
+#serial-input { flex-grow: 1; font-family: 'Consolas', monospace; }
+
+/* Status Bar */
+.status-bar { font-size: 0.85em; color: #858585; text-align: left; padding: 2px 5px; }

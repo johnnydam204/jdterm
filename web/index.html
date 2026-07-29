@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JDTerm - Serial Terminal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Control Panel -->
+        <header class="control-panel">
+            <div class="config-group">
+                <label for="com-port">Port:</label>
+                <select id="com-port">
+                    <option value="">Loading...</option>
+                </select>
+                
+                <label for="baud-rate">Baud:</label>
+                <select id="baud-rate">
+                    <option value="9600">9600</option>
+                    <option value="115200" selected>115200</option>
+                    <option value="921600">921600</option>
+                </select>
+            </div>
+            <button id="btn-connect" class="btn connect">Connect</button>
+        </header>
+
+        <!-- Console Output -->
+        <main class="console-area">
+            <pre id="console-output"></pre>
+        </main>
+
+        <!-- Input Panel -->
+        <footer class="input-panel">
+            <input type="text" id="serial-input" placeholder="Type data to send..." autocomplete="off">
+            <button id="btn-send" class="btn">Send</button>
+        </footer>
+        
+        <!-- Status Bar -->
+        <div class="status-bar" id="status-bar">
+            Status: Disconnected
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
