@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,34 +14,22 @@ import (
 	"github.com/pkg/browser"
 )
 
-// Hàm tự động tìm một cổng TCP còn trống trên máy tính
-func getFreePort() (string, error) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		return "", err
-	}
-	defer listener.Close()
-	addr := listener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%d", addr.Port), nil
-}
-
 func main() {
 	// Tự động tìm port trống để tránh xung đột
-	port, err := getFreePort()
+	port, err := webserver.GetFreePort()
 	if err != nil {
 		port = "8080" // Fallback mặc định nếu lỗi
 	}
 
-	url := fmt.Sprintf("http://127.0.0.1:%s", port)
+	// Địa chỉ đầy đủ để khởi chạy server
+	address := fmt.Sprintf("127.0.0.1:%s", port)
 
-	// Khởi chạy HTTP Server & WebSocket trong Goroutine
+	// Địa chỉ URL để mở trình duyệt
+	url := fmt.Sprintf("http://%s", address)
+
+	// Gọi hàm Start từ package webserver thay vì viết lại
 	go func() {
-		mux := http.NewServeMux()
-		mux.HandleFunc("/ws", webserver.HandleWebSocket)
-		mux.Handle("/", http.FileServer(http.FS(web.FS)))
-
-		log.Printf("JDTerm Server is running at: %s\n", url)
-		if err := http.ListenAndServe("127.0.0.1:"+port, mux); err != nil {
+		if err := webserver.Start(web.FS, address); err != nil {
 			log.Fatalf("Error starting server: %v", err)
 		}
 	}()

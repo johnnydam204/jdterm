@@ -2,12 +2,25 @@ package webserver
 
 import (
 	"embed"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
 )
 
-// Start khởi chạy HTTP Server và WebSocket
-func Start(embeddedFiles embed.FS, port string) {
+// Hàm tự động tìm một cổng TCP còn trống trên máy tính
+func GetFreePort() (string, error) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return "", err
+	}
+	defer listener.Close()
+	addr := listener.Addr().(*net.TCPAddr)
+	return fmt.Sprintf("%d", addr.Port), nil
+}
+
+// Start khởi chạy HTTP Server và WebSocket với port linh hoạt
+func Start(embeddedFiles embed.FS, address string) error {
 	mux := http.NewServeMux()
 
 	// 1. Route cho WebSocket API
@@ -16,10 +29,8 @@ func Start(embeddedFiles embed.FS, port string) {
 	// 2. Route phục vụ file tĩnh (Frontend)
 	mux.Handle("/", http.FileServer(http.FS(embeddedFiles)))
 
-	log.Printf("Server is running at: http://localhost:%s", port)
+	log.Printf("JDTerm Server is running at: http://%s\n", address)
 
-	// Khởi chạy server với bộ định tuyến (mux)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatalf("Error starting server: %v", err)
-	}
+	// Khởi chạy server
+	return http.ListenAndServe(address, mux)
 }
