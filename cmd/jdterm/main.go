@@ -22,10 +22,17 @@ func main() {
 	}
 
 	// Địa chỉ đầy đủ để khởi chạy server
-	address := fmt.Sprintf("127.0.0.1:%s", port)
+	// Địa chỉ localhost với port được chọn, không truy cập từ bên ngoài
+	// address := fmt.Sprintf("127.0.0.1:%s", port)
+	// Hoặc
+	// address := fmt.Sprintf("localhost:%s", port)
+
+	// Địa chỉ localhost với port được chọn, có thể truy cập từ bên ngoài (nếu cần)
+	address := fmt.Sprintf(":%s", port)
 
 	// Địa chỉ URL để mở trình duyệt
-	url := fmt.Sprintf("http://%s", address)
+	// url := fmt.Sprintf("http://%s", address)
+	url := fmt.Sprintf("http://127.0.0.1:%s", port)
 
 	// Gọi hàm Start từ package webserver thay vì viết lại
 	go func() {
@@ -36,13 +43,17 @@ func main() {
 
 	// Đợi server kịp khởi động 1 chút rồi tự động mở trình duyệt (App Mode / Default Browser)
 	go func() {
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 		log.Printf("Opening JDTerm interface...")
 		err := browser.OpenURL(url)
 		if err != nil {
 			log.Printf("Cannot automatically open browser. Please access manually: %s\n", url)
 		}
 	}()
+
+	// In thông báo rõ ràng lên Terminal để dễ theo dõi
+	log.Printf("-> Host Access: http://127.0.0.1:%s", port)
+	log.Printf("-> Client Access: http://<HOST_PUBLIC_IP>:%s", port)
 
 	// Giữ chương trình chạy cho đến khi người dùng tắt
 	sigChan := make(chan os.Signal, 1)
