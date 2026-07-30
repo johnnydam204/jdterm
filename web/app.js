@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnConnect = document.getElementById('btn-connect');
     const btnClear = document.getElementById('btn-clear');
-    const btnExport = document.getElementById('btn-export');    
+    const btnExport = document.getElementById('btn_export');    
     const btnSend = document.getElementById('btn-send');
 
     const inputField = document.getElementById('serial-input');
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (msg.evt === 'connected') {
                     isSerialConnected = true;
                     btnConnect.textContent = 'Disconnect';
-                    btnConnect.className = 'btn disconnect';
+                    btnConnect.className = 'btn_disconnect';
                     comPortSelect.disabled = true;
                     baudRateSelect.disabled = true;
                     logToConsole(`Serial Port is opened successfully: ${comPortSelect.value} @ ${baudRateSelect.value} bps.`, 'system');
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (isSerialConnected) { // Kiểm tra cờ trạng thái
                         isSerialConnected = false;
                         btnConnect.textContent = 'Connect';
-                        btnConnect.className = 'btn connect';
+                        btnConnect.className = 'btn_connect';
                         comPortSelect.disabled = false;
                         baudRateSelect.disabled = false;
                         logToConsole('Serial Port is closed.', 'system');
