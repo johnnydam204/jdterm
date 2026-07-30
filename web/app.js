@@ -2,8 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const consoleOutput = document.getElementById('console-output');
     const comPortSelect = document.getElementById('com-port');
     const baudRateSelect = document.getElementById('baud-rate');
+
     const btnConnect = document.getElementById('btn-connect');
+    const btnClear = document.getElementById('btn-clear');
+    const btnExport = document.getElementById('btn-export');    
     const btnSend = document.getElementById('btn-send');
+
     const inputField = document.getElementById('serial-input');
     const statusBar = document.getElementById('status-bar');
 
@@ -28,14 +32,36 @@ document.addEventListener('DOMContentLoaded', () => {
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-            logToConsole('Đã kết nối Backend Core.', 'system');
+            logToConsole('Connected to Backend Core.', 'system');
             ws.send(JSON.stringify({ cmd: 'list_ports' }));
         };
 
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                
+
+                // Xử lý phân quyền ngay khi kết nối
+                if (msg.evt === 'role') {
+                    const isHost = msg.data.isHost;
+                    if (!isHost) {
+                        // Nếu là máy khách (Viewer), tiến hành vô hiệu hóa control
+                        comPortSelect.disabled = true;
+                        baudRateSelect.disabled = true;
+                        btnConnect.disabled = true;
+                        btnSend.disabled = true;
+                        inputField.disabled = true;
+                        
+                        btnConnect.style.opacity = '0.5';
+                        btnSend.style.opacity = '0.5';
+                        inputField.placeholder = "Viewer Mode - Input Disabled";
+                        
+                        statusBar.textContent = "Status: Connected as Viewer (Read-only)";
+                        logToConsole("You are connected as a Viewer (Read-only mode), controls are disabled.", "system");
+                    } else {
+                        statusBar.textContent = "Status: Connected as Host (Master)";
+                    }
+                }     
+
                 if (msg.evt === 'ports') {
                     const ports = msg.data || [];
                     comPortSelect.innerHTML = '';
@@ -58,36 +84,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     btnConnect.className = 'btn disconnect';
                     comPortSelect.disabled = true;
                     baudRateSelect.disabled = true;
-                    logToConsole(`Đã mở cổng Serial thành công @ ${baudRateSelect.value} bps.`, 'system');
-                    statusBar.textContent = `Status: Opened Port @ ${baudRateSelect.value} bps`;
+                    logToConsole(`Serial Port is opened successfully: ${comPortSelect.value} @ ${baudRateSelect.value} bps.`, 'system');
+                    statusBar.textContent = `Status: Connected to ${comPortSelect.value} @ ${baudRateSelect.value} bps`;
                 } 
                 else if (msg.evt === 'disconnected') {
-                    isSerialConnected = false;
-                    btnConnect.textContent = 'Connect';
-                    btnConnect.className = 'btn connect';
-                    comPortSelect.disabled = false;
-                    baudRateSelect.disabled = false;
-                    logToConsole('Đã đóng cổng Serial.', 'system');
-                    statusBar.textContent = 'Status: Port Closed';
+                    if (isSerialConnected) { // Kiểm tra cờ trạng thái
+                        isSerialConnected = false;
+                        btnConnect.textContent = 'Connect';
+                        btnConnect.className = 'btn connect';
+                        comPortSelect.disabled = false;
+                        baudRateSelect.disabled = false;
+                        logToConsole('Serial Port is closed.', 'system');
+                        statusBar.textContent = 'Status: Port Closed';
+                    }
                 } 
                 else if (msg.evt === 'error') {
-                    logToConsole(`Lỗi: ${msg.data}`, 'error');
+                    logToConsole(`Error: ${msg.data}`, 'error');
                 }
                 else if (msg.evt === 'rx') {
-                    // In raw data từ MCU (không timestamp để giống Realterm/Putty)
+                    const consoleOutput = document.getElementById('console-output');
                     const rxSpan = document.createElement('span');
-                    rxSpan.style.color = '#4af626'; // Xanh lá
-                    rxSpan.textContent = msg.data;
+                    rxSpan.style.color = '#4af626'; // Xanh lá đặc trưng Terminal
+                    
+                    // Sử dụng TimeStamp đồng bộ từ Server truyền xuống
+                    const timeTag = msg.timestamp ? `[${msg.timestamp}] ` : '';
+                    rxSpan.textContent = `${timeTag}${msg.data}`;
+                    
                     consoleOutput.appendChild(rxSpan);
                     consoleOutput.parentElement.scrollTop = consoleOutput.parentElement.scrollHeight;
                 }
             } catch (err) {
-                console.error("Lỗi parse JSON:", err);
+                console.error("Error parsing JSON:", err);
             }
         };
 
         ws.onclose = () => {
-            logToConsole('Mất kết nối với Backend!', 'error');
+            logToConsole('Connection to Backend lost!', 'error');
             statusBar.textContent = 'Status: Backend Disconnected';
             isSerialConnected = false;
         };
@@ -102,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!port || port === "No Port Found") return;
             
-            logToConsole(`Đang yêu cầu kết nối ${port}...`, 'system');
+            logToConsole(`Connecting to ${port} @ ${baud} bps...`, 'system');
             ws.send(JSON.stringify({ 
                 cmd: 'connect', 
                 data: { port: port, baud: baud } 
@@ -112,10 +144,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Lắng nghe sự kiện click nút Clear
+    btnClear.addEventListener('click', () => {
+        // Xóa sạch toàn bộ nội dung bên trong khung terminal
+        consoleOutput.innerHTML = '';
+        logToConsole('Terminal has been cleared.', 'system');
+    });
+
+    // Lắng nghe sự kiện click nút Export
+    btnExport.addEventListener('click', () => {
+        // Lấy toàn bộ text đang hiển thị trên terminal
+        const textContent = consoleOutput.innerText;
+        
+        if (!textContent.trim()) {
+            alert('Terminal đang trống, không có nội dung để export!');
+            return;
+        }
+
+        // Tạo tên file tự động dựa theo thời gian thực (VD: jdterm_log_20260730_183000.txt)
+        const now = new Date();
+        const timestampStr = now.getFullYear().toString() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0') + '_' +
+            String(now.getHours()).padStart(2, '0') +
+            String(now.getMinutes()).padStart(2, '0') +
+            String(now.getSeconds()).padStart(2, '0');
+        
+        const fileName = `jdterm_log_${timestampStr}.txt`;
+
+        // Tạo Blob chứa dữ liệu dạng text/plain
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        // Tạo một thẻ <a> ảo để kích hoạt tính năng tải xuống của trình duyệt
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+
+        // Dọn dẹp tài nguyên sau khi tải xong
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        logToConsole(`Terminal content exported to ${fileName}`, 'system');
+    });
+
     // Lắng nghe sự kiện click nút Send
     btnSend.addEventListener('click', () => {
         if (!ws || !isSerialConnected) {
-            logToConsole('Chưa kết nối cổng COM!', 'error');
+            logToConsole('Not connected to a serial port!', 'error');
             return;
         }
 

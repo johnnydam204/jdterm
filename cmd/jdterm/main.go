@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,52 +14,51 @@ import (
 	"github.com/pkg/browser"
 )
 
-// Hàm tự động tìm một cổng TCP còn trống trên máy tính
-func getFreePort() (string, error) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		return "", err
-	}
-	defer listener.Close()
-	addr := listener.Addr().(*net.TCPAddr)
-	return fmt.Sprintf("%d", addr.Port), nil
-}
-
 func main() {
 	// Tự động tìm port trống để tránh xung đột
-	port, err := getFreePort()
+	port, err := webserver.GetFreePort()
 	if err != nil {
 		port = "8080" // Fallback mặc định nếu lỗi
 	}
 
+	// Địa chỉ đầy đủ để khởi chạy server
+	// Địa chỉ localhost với port được chọn, không truy cập từ bên ngoài
+	// address := fmt.Sprintf("127.0.0.1:%s", port)
+	// Hoặc
+	// address := fmt.Sprintf("localhost:%s", port)
+
+	// Địa chỉ localhost với port được chọn, có thể truy cập từ bên ngoài (nếu cần)
+	address := fmt.Sprintf(":%s", port)
+
+	// Địa chỉ URL để mở trình duyệt
+	// url := fmt.Sprintf("http://%s", address)
 	url := fmt.Sprintf("http://127.0.0.1:%s", port)
 
-	// Khởi chạy HTTP Server & WebSocket trong Goroutine
+	// Gọi hàm Start từ package webserver thay vì viết lại
 	go func() {
-		mux := http.NewServeMux()
-		mux.HandleFunc("/ws", webserver.HandleWebSocket)
-		mux.Handle("/", http.FileServer(http.FS(web.FS)))
-
-		log.Printf("JDTerm Server đang chạy tại: %s\n", url)
-		if err := http.ListenAndServe("127.0.0.1:"+port, mux); err != nil {
-			log.Fatalf("Lỗi server: %v", err)
+		if err := webserver.Start(web.FS, address); err != nil {
+			log.Fatalf("Error starting server: %v", err)
 		}
 	}()
 
 	// Đợi server kịp khởi động 1 chút rồi tự động mở trình duyệt (App Mode / Default Browser)
 	go func() {
-		time.Sleep(300 * time.Millisecond)
-		log.Printf("Đang mở giao diện JDTerm...")
+		time.Sleep(500 * time.Millisecond)
+		log.Printf("Opening JDTerm interface...")
 		err := browser.OpenURL(url)
 		if err != nil {
-			log.Printf("Không thể tự động mở trình duyệt. Hãy truy cập thủ công: %s\n", url)
+			log.Printf("Cannot automatically open browser. Please access manually: %s\n", url)
 		}
 	}()
+
+	// In thông báo rõ ràng lên Terminal để dễ theo dõi
+	log.Printf("-> Host Access: http://127.0.0.1:%s", port)
+	log.Printf("-> Client Access: http://<HOST_PUBLIC_IP>:%s", port)
 
 	// Giữ chương trình chạy cho đến khi người dùng tắt
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
 
-	log.Println("JDTerm đã tắt.")
+	log.Println("JDTerm has been shut down.")
 }

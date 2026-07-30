@@ -4,6 +4,12 @@ JD Serial Terminal WebApp
 
 ## Project Feature
 
+## Run
+
+```powershell
+go run ./cmd/jdterm/main.go
+```
+
 ## Build
 
 ### Windows PowerShell
