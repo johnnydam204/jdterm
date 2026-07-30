@@ -9,7 +9,14 @@ select, input, .btn { padding: 6px 10px; background: #3c3c3c; color: #fff; borde
 select:focus, input:focus { border-color: #007acc; }
 
 /* Buttons */
-.btn { cursor: pointer; transition: 0.2s; background: #0e639c; border: none; font-weight: bold; }
+.btn { 
+    cursor: pointer; 
+    transition: 0.2s; 
+    background: #0e639c; 
+    border: none; 
+    font-weight: bold; 
+}
+
 .btn:hover { background: #1177bb; }
 .btn.connect { background: #28a745; }
 .btn.disconnect { background: #dc3545; }

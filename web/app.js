@@ -2,8 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const consoleOutput = document.getElementById('console-output');
     const comPortSelect = document.getElementById('com-port');
     const baudRateSelect = document.getElementById('baud-rate');
+
     const btnConnect = document.getElementById('btn-connect');
+    const btnClear = document.getElementById('btn-clear');
+    const btnExport = document.getElementById('btn-export');    
     const btnSend = document.getElementById('btn-send');
+
     const inputField = document.getElementById('serial-input');
     const statusBar = document.getElementById('status-bar');
 
@@ -138,6 +142,52 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             ws.send(JSON.stringify({ cmd: 'disconnect' }));
         }
+    });
+
+    // Lắng nghe sự kiện click nút Clear
+    btnClear.addEventListener('click', () => {
+        // Xóa sạch toàn bộ nội dung bên trong khung terminal
+        consoleOutput.innerHTML = '';
+        logToConsole('Terminal has been cleared.', 'system');
+    });
+
+    // Lắng nghe sự kiện click nút Export
+    btnExport.addEventListener('click', () => {
+        // Lấy toàn bộ text đang hiển thị trên terminal
+        const textContent = consoleOutput.innerText;
+        
+        if (!textContent.trim()) {
+            alert('Terminal đang trống, không có nội dung để export!');
+            return;
+        }
+
+        // Tạo tên file tự động dựa theo thời gian thực (VD: jdterm_log_20260730_183000.txt)
+        const now = new Date();
+        const timestampStr = now.getFullYear().toString() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0') + '_' +
+            String(now.getHours()).padStart(2, '0') +
+            String(now.getMinutes()).padStart(2, '0') +
+            String(now.getSeconds()).padStart(2, '0');
+        
+        const fileName = `jdterm_log_${timestampStr}.txt`;
+
+        // Tạo Blob chứa dữ liệu dạng text/plain
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        // Tạo một thẻ <a> ảo để kích hoạt tính năng tải xuống của trình duyệt
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+
+        // Dọn dẹp tài nguyên sau khi tải xong
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        logToConsole(`Terminal content exported to ${fileName}`, 'system');
     });
 
     // Lắng nghe sự kiện click nút Send
